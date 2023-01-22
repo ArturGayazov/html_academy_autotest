@@ -2,7 +2,7 @@
 import pytest
 from uatf import *
 from uatf.ui import *
-from pages.main import MainPage
+from pages.main_page import MainPage
 
 
 class TestOpenSite(TestCaseUI):
