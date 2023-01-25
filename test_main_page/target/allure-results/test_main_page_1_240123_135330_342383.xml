@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="3" time="14.189" timestamp="2023-01-24T13:53:30.565201" hostname="MacBook-Pro-Artur.local"><testcase classname="test_main_page_1.TestOpenSite" name="test_01_check_points_in_dropdown_001" time="8.831"><system-out>--------------------------------- Captured Out ---------------------------------
+
+</system-out></testcase><testcase classname="test_main_page_1.TestOpenSite" name="test_01_check_points_in_dropdown_002" time="2.000"><system-out>--------------------------------- Captured Out ---------------------------------
+
+</system-out></testcase><testcase classname="test_main_page_1.TestOpenSite" name="test_01_check_points_in_dropdown_003" time="3.344"><system-out>--------------------------------- Captured Out ---------------------------------
+
+</system-out></testcase></testsuite></testsuites>

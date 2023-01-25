@@ -18,9 +18,9 @@ class TestOpenSite(TestCaseUI):
         self.main.open()
 
     @pytest.mark.parametrize('dropdown_name,counts', (
-            ['Начать с нуля', 8],
+            ['Начать с нуля !!', 8],
             ['Получить профессию', 10],
-            ['Повысить грейд', 10]
+            ['Повысить грейд !!', 10]
     ))
     def test_01_check_points_in_dropdown(self, dropdown_name, counts):
         """Проверяем кол-во элементов в выпадающих списках заголовка"""
