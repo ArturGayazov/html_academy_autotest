@@ -99,7 +99,7 @@ class TestExampleAttachFile(object):  # если в будущем будем с
     # !!! а еще можно сравнивать html страницы
 
     def test_compare_two_file(self):
-        allure.attach.file('test_file.txt', 'Эталонный файл', allure.attachment_type.TEXT)
+        allure.attach.file('test_allure_example/test_file.txt', 'Эталонный файл', allure.attachment_type.TEXT)
         print('Сравниваем два файла')
         file_1 = True
         file_2 = False
