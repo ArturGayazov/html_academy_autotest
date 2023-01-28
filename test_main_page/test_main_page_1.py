@@ -4,7 +4,6 @@ from uatf import *
 from uatf.ui import *
 from pages.main_page import MainPage
 
-
 class TestOpenSite(TestCaseUI):
     """Пробный тест"""
 
@@ -23,6 +22,16 @@ class TestOpenSite(TestCaseUI):
             ['Повысить грейд', 10]
     ))
     def test_01_check_points_in_dropdown(self, dropdown_name, counts):
+        """Проверяем кол-во элементов в выпадающих списках заголовка"""
+
+        log('Открываем выпадающий список кликом по заголовку')
+        self.main.header.check_counts_in_dropdown(dropdown_name, counts)
+
+        log('Открываем выпадающий список наведением мышки на заголовок')
+        self.browser.refresh()
+        self.main.header.check_counts_in_dropdown(dropdown_name, counts, True)
+
+    def test_02_check_points_in_dropdown(self, dropdown_name='Начать с нуля', counts=7):
         """Проверяем кол-во элементов в выпадающих списках заголовка"""
 
         log('Открываем выпадающий список кликом по заголовку')
