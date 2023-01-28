@@ -1,5 +1,6 @@
 from uatf import *
 from uatf.ui import *
+import allure
 
 
 class Dropdown(Control):
@@ -26,8 +27,9 @@ class Dropdown(Control):
             rus_name="Группа пунктов"
         )
 
+    @allure.step('Открываем выпадающий список')
     def open(self, mouse_over: bool = False):
-        """Открыть выпадающий список
+        """
         :param mouse_over: True-открываем наведением мышки на заголовок выпадающего списка, False-кликом по
         заголовку списка"""
 
@@ -39,13 +41,15 @@ class Dropdown(Control):
 
         return self.header_link.text
 
+    @property
     def count_elements(self):
-        """Возвращает кол-во пунктов в выпадающем списке"""
+        """Возвращаем кол-во пунктов в выпадающем списке"""
 
         return self.points.count_elements
 
+    @allure.step('Проваливаемся в необходимый пункт')
     def select_item(self, point_name: str):
-        """Проваливаемся в необходимый пункт
+        """
         :param point_name: Название пункта"""
 
         self.points.item(contains_text=point_name).click()
