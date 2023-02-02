@@ -208,7 +208,7 @@ def getDiskName() {
 		"test-selenium-builder10": "O",
 	]	
     def disk = buildersMap.get(env.NODE_NAME, null)    
-    assert disk : "Unknown builder: ${env.NODE_NAME}"        
+    // assert disk : "Unknown builder: ${env.NODE_NAME}"        
 	return disk
 }
 
