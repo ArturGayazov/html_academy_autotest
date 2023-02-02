@@ -2,14 +2,13 @@
 
 def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=false) {
     def helpers = load 'helpers.groovy'
-    def authService = 'http://auth-autotests.tensor.ru:5000'
+    // def authService = 'http://auth-autotests.tensor.ru:5000'
     def valueTimeout = 120
     def commandLine = []
     def userOptions = []
-    def saby = false
+    // def saby = false
 
     // try {
-    def disk = helpers.getDiskName()  // имя мапнутого диска на ноде с браузером
 
     // получаем имя сборки без папки
     if (JOB_NAME.contains('/')) {
@@ -19,46 +18,46 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
     }
 
     // стенд + юнит
-    standWithUnit = jobNameStrict.split(' ')[1]
+    // standWithUnit = jobNameStrict.split(' ')[1]
 
     pathTests = standWithUnit
     // генерим имя папки, если это smoke тесты, то добавляем -smoke
-    if (jobNameStrict.contains('smoke')) {
-        pathTests += '-smoke'
-        valueTimeout = 30
-    }
+    // if (jobNameStrict.contains('smoke')) {
+    //     pathTests += '-smoke'
+    //     valueTimeout = 30
+    // }
 
-    def configPath = "config/${standWithUnit.replace('-', '_')}.ini"
-    def standWithUnitMap = helpers.parseNameJob(standWithUnit)
-    def standName = standWithUnitMap.get("stand", "")
-    def product = standWithUnitMap.get('product').toUpperCase()
-    def unit = standWithUnitMap.get('unit', null)
+    def configPath = "config.ini"
+    // def standWithUnitMap = helpers.parseNameJob(standWithUnit)
+    // def standName = standWithUnitMap.get("stand", "")
+    // def product = standWithUnitMap.get('product').toUpperCase()
+    // def unit = standWithUnitMap.get('unit', null)
     def paramsJob = helpers.getJobParams(product);
-    println("unit: ${unit}")
-    def milestone = helpers.getMilestoneSettings(standName, product, unit)
-    println("MILESTONE: ${milestone}")
-    commandLine.add("--MILESTONE \"${milestone}\"")
+    // println("unit: ${unit}")
+    // def milestone = helpers.getMilestoneSettings(standName, product, unit)
+    // println("MILESTONE: ${milestone}")
+    // commandLine.add("--MILESTONE \"${milestone}\"")
     // обновляем виртуальное окружение
     def branch = null;
     if (params.get('BRANCH')) {
         branch = params.get('BRANCH')
     }
-    def atf_branch = null;
-    if (params.get('ATF_BRANCH')) {
-        atf_branch = helpers.getBranchPath(params.get('ATF_BRANCH'))
-    }
-    def pythonBin = "/home/jenkins/envs/selenium4/bin/python3.7";
+    // def atf_branch = null;
+    // if (params.get('ATF_BRANCH')) {
+    //     atf_branch = helpers.getBranchPath(params.get('ATF_BRANCH'))
+    // }
+    def pythonBin = "/Users/artur_gaazov/Documents/html_academy/venv"; //!!!ВАЖНАЯ СТРОКА
 
-    def controlsVer = null;
-    if (params.get('CONTROLS')) {
-        controlsVer = helpers.getBranchPath(params.get('CONTROLS'))
-    }
-    def updateEnv = params.get('UPDATE')
-    def tmp = helpers.updateEnvorimentGit(product, updateEnv, false, branch, false, unit, atf_branch, controlsVer, params.get('OPERATOR_DEPENDENCY'))
-    def pythonPath = tmp[1]
-    def ver = tmp[0]
-    def serverAddress = "--SERVER_ADDRESS " + tmp[2]
-    def repPaths = tmp[3]
+    // def controlsVer = null;
+    // if (params.get('CONTROLS')) {
+    //     controlsVer = helpers.getBranchPath(params.get('CONTROLS'))
+    // }
+    // def updateEnv = params.get('UPDATE')
+    // def tmp = helpers.updateEnvorimentGit(product, updateEnv, false, branch, false, unit, atf_branch, controlsVer, params.get('OPERATOR_DEPENDENCY'))
+    def pythonPath = pythonBin
+    // def ver = tmp[0]
+    // def serverAddress = "--SERVER_ADDRESS " + tmp[2]
+    // def repPaths = tmp[3]
 
     if (params.get('HEADLESS')) {
         commandLine.add('--HEADLESS_MODE True')
@@ -93,19 +92,19 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
         paramsJob.add(choice(choices: 'online\nsaby', name: 'DOMAIN', description: 'run tests on domain'))
     }
 
-    paramDomain = params.get('DOMAIN')
-    if (paramDomain && paramDomain == 'saby') {
-        def tmpProduct = product
-        if (tmpProduct == 'SBIS') {
-            commandLine.add("--SITE https://${standName}.saby.ru")
-        } else {
-            if (tmpProduct == 'INSIDE') {
-                tmpProduct = "ONLINE"
-            }
-            commandLine.add("--SITE https://${standName}-${tmpProduct.toLowerCase()}.saby.ru")
-        }
-        currentName.add(paramDomain)
-    }
+    // paramDomain = params.get('DOMAIN')
+    // if (paramDomain && paramDomain == 'saby') {
+    //     def tmpProduct = product
+    //     if (tmpProduct == 'SBIS') {
+    //         commandLine.add("--SITE https://${standName}.saby.ru")
+    //     } else {
+    //         if (tmpProduct == 'INSIDE') {
+    //             tmpProduct = "ONLINE"
+    //         }
+    //         commandLine.add("--SITE https://${standName}-${tmpProduct.toLowerCase()}.saby.ru")
+    //     }
+    //     currentName.add(paramDomain)
+    // }
 
     // параметры сборки
     properties([
@@ -120,9 +119,9 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
     ])
 
     // для -eng
-    if (standWithUnit.endsWith('-eng')) {
-        userOptions.add("LANG=eng")
-    }
+    // if (standWithUnit.endsWith('-eng')) {
+    //     userOptions.add("LANG=eng")
+    // }
 
     if (params.get('USER_OPTIONS')) {
         for (i in params.get('USER_OPTIONS').split(' ')) {
@@ -130,47 +129,47 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
         }
     }
     
-    if (params.get('CHECK_UNIT')) {
-        def check_unit
-        if (unit) {
-            if (unit == 'autotests'){
-                check_unit = "autotests-inside"
-            }
-            else if (unit == 'ext-autotest'){
-                check_unit = "autotest-ext"
-            }
-            else{
-                check_unit = unit
-            }
-        }
-        else {
-            check_unit = product.toLowerCase()
-        }
-        commandLine.add("--UNIT_FOR_CHECK \"${check_unit}\"")
-    }
+    // if (params.get('CHECK_UNIT')) {
+    //     def check_unit
+    //     if (unit) {
+    //         if (unit == 'autotests'){
+    //             check_unit = "autotests-inside"
+    //         }
+    //         else if (unit == 'ext-autotest'){
+    //             check_unit = "autotest-ext"
+    //         }
+    //         else{
+    //             check_unit = unit
+    //         }
+    //     }
+    //     else {
+    //         check_unit = product.toLowerCase()
+    //     }
+    //     commandLine.add("--UNIT_FOR_CHECK \"${check_unit}\"")
+    // }
 
     // для приемочных на production запускаем только протегированные
-    if ((!standName && !jobNameStrict.contains('smoke')) || (modificator.contains('only') && standName != 'test'))  {
-        def depTags = [
-            'INSIDE': 'production_inside',
-            'ONLINE': 'production_online',
-            'MY': 'production_online',
-            'CLOUD': 'production'
-        ]
-        def tag = depTags.get(product, "")
-        if (tag.size() > 0) {
-            commandLine.add("--TAGS_TO_START \"${tag}\"")
-        }
-    }
+    // if ((!standName && !jobNameStrict.contains('smoke')) || (modificator.contains('only') && standName != 'test'))  {
+    //     def depTags = [
+    //         'INSIDE': 'production_inside',
+    //         'ONLINE': 'production_online',
+    //         'MY': 'production_online',
+    //         'CLOUD': 'production'
+    //     ]
+    //     def tag = depTags.get(product, "")
+    //     if (tag.size() > 0) {
+    //         commandLine.add("--TAGS_TO_START \"${tag}\"")
+    //     }
+    // }
     // для приемочных на vip64 запускаем только протегированные
-    if ((unit == 'ext-vip64') && !jobNameStrict.contains('smoke'))  {
-        commandLine.add("--TAGS_TO_START \"ext64\"")
-    }
+    // if ((unit == 'ext-vip64') && !jobNameStrict.contains('smoke'))  {
+    //     commandLine.add("--TAGS_TO_START \"ext64\"")
+    // }
 
     // автовыстовление статуса в проверках, кроме боевых сборок
-    if ( setStatusCheck == true && standName ) {
-        commandLine.add("--SET_STATUS_CHECK")
-    }
+    // if ( setStatusCheck == true && standName ) {
+    //     commandLine.add("--SET_STATUS_CHECK")
+    // }
 
     // берем имя папки из пути в репозитории GIT
     folderName = repoPath.replace('/', '_')    
@@ -240,10 +239,10 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
         }
 
         // DOWNLOAD_DIR_BROWSER
-        downloadDirBrowser="${disk}:\\${pathTests.replace('/', '\\')}"
+        // downloadDirBrowser="${disk}:\\${pathTests.replace('/', '\\')}"
 
         // квота для tensor-grid
-        def quota = standWithUnit.replace('-', '_')
+        // def quota = standWithUnit.replace('-', '_')
 
         //Запустить только упавшие?
         if (params.get('BUILD_MODE') == 'FAILED') {
@@ -256,9 +255,9 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
             currentName.add('FAILED_WITHOUT_ERRORS')
         }
         
-        if (params.get('DOCKER')) {
-            currentName.add('DOCKER')
-        }
+        // if (params.get('DOCKER')) {
+        //     currentName.add('DOCKER')
+        // }
         
         //Записываем параметры в название билда сборки, если они были переданы
         if (currentName) {
@@ -287,12 +286,12 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
             commandLine.add('--RESTART_AFTER_BUILD_MODE')
         }
                 
-        def versionJSON = helpers.saveVersions(quota)
-        if (versionJSON && versionJSON.build && versionJSON.version) {
-            println(">>>>>>> PRODUCT VERSION: ${versionJSON.version} # ${versionJSON.build}")
-            commandLine.add("--PRODUCT_VERSION \"${versionJSON.version}\"")
-            commandLine.add("--PRODUCT_BUILD \"${versionJSON.build}\"")
-        }
+        // def versionJSON = helpers.saveVersions(quota)
+        // if (versionJSON && versionJSON.build && versionJSON.version) {
+        //     println(">>>>>>> PRODUCT VERSION: ${versionJSON.version} # ${versionJSON.build}")
+        //     commandLine.add("--PRODUCT_VERSION \"${versionJSON.version}\"")
+        //     commandLine.add("--PRODUCT_BUILD \"${versionJSON.build}\"")
+        // }
         
         commandLine = commandLine.join(' ')
         if (userOptions.size() > 0) {
