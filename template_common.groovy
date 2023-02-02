@@ -30,7 +30,7 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
     def configPath = "config.ini"
     // def standWithUnitMap = helpers.parseNameJob(standWithUnit)
     // def standName = standWithUnitMap.get("stand", "")
-    // def product = standWithUnitMap.get('product').toUpperCase()
+    def product = ''
     // def unit = standWithUnitMap.get('unit', null)
     def paramsJob = helpers.getJobParams(product);
     // println("unit: ${unit}")
