@@ -18,7 +18,7 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
     }
 
     // стенд + юнит
-    // standWithUnit = jobNameStrict.split(' ')[1]
+    standWithUnit = jobNameStrict.split(' ')[1]
 
     pathTests = standWithUnit
     // генерим имя папки, если это smoke тесты, то добавляем -smoke
