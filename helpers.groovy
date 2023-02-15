@@ -244,12 +244,12 @@ def getDependancy(product, operator_dependency) {
     ]
 
     // получаем зависимости, если продукт не найден, падаем
-    def dependancy = dependancyMap.get(product, null)
-    assert dependancy : "Unknown product: ${product}"
-    if (operator_dependency) {
-        dependancy.addAll(["OTF", "CTT", "OFD" , "OFDTOOLS"])
-	}
-	return dependancy
+    // def dependancy = dependancyMap.get(product, null)
+    // assert dependancy : "Unknown product: ${product}"
+    // if (operator_dependency) {
+    //     dependancy.addAll(["OTF", "CTT", "OFD" , "OFDTOOLS"])
+	// }
+	// return dependancy
 }
 
 // получение модификатора тестов (cloud, inside-only, xp, ie)
@@ -327,25 +327,25 @@ def getSettingsProps(props_path=null) {
 }
 
 // получаем настройку MILESTONE
-def getMilestoneSettings(stand, product, unit, props_path=null) {
-	def props = getSettingsProps(props_path)
-	def setName
-	if ( stand ) {
-		setName = "MILESTONE_${stand}_${product}"
-	} else {
-		setName = "MILESTONE_${product}"
-	}
+// def getMilestoneSettings(stand, product, unit, props_path=null) {
+// 	def props = getSettingsProps(props_path)
+// 	def setName
+// 	if ( stand ) {
+// 		setName = "MILESTONE_${stand}_${product}"
+// 	} else {
+// 		setName = "MILESTONE_${product}"
+// 	}
 	
-	if ( unit ) {
-		setName += "_${unit}"
-	}
-	setName = setName.replace('-', '_').toUpperCase()
-	def milestone = props[setName]
-	if ( !milestone ) {
-		error("Не удалось получить значение для параметра ${setName}")
-	}
-	return milestone
-}
+// 	if ( unit ) {
+// 		setName += "_${unit}"
+// 	}
+// 	setName = setName.replace('-', '_').toUpperCase()
+// 	def milestone = props[setName]
+// 	if ( !milestone ) {
+// 		error("Не удалось получить значение для параметра ${setName}")
+// 	}
+// 	return milestone
+// }
 
 def setStateStand(stand, block, jobName, units=null) {	
 	def jcAddress = 'http://jenkins-control.tensor.ru'
