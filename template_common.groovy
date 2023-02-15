@@ -82,15 +82,15 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
     }
 
     def currentName = []
-    if (atf_branch) {
-        currentName.add(atf_branch)
-    }
-    if (controlsVer) {
-        currentName.add(controlsVer)
-    }
-    if (product in ['ONLINE', 'INSIDE', 'MY']) {
-        paramsJob.add(choice(choices: 'online\nsaby', name: 'DOMAIN', description: 'run tests on domain'))
-    }
+    // if (atf_branch) {
+    //     currentName.add(atf_branch)
+    // }
+    // if (controlsVer) {
+    //     currentName.add(controlsVer)
+    // }
+    // if (product in ['ONLINE', 'INSIDE', 'MY']) {
+    //     paramsJob.add(choice(choices: 'online\nsaby', name: 'DOMAIN', description: 'run tests on domain'))
+    // }
 
     // paramDomain = params.get('DOMAIN')
     // if (paramDomain && paramDomain == 'saby') {
