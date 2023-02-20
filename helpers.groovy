@@ -206,9 +206,12 @@ def getDiskName() {
 		"psdr-prognix7": "S",
 		"test-selenium-builder9": "P",
 		"test-selenium-builder10": "O",
+		"test-selenium-builder57": "N",
+		"test-selenium-builder58": "M",
+		"test-selenium-builder59": "L",
 	]	
     def disk = buildersMap.get(env.NODE_NAME, null)    
-    // assert disk : "Unknown builder: ${env.NODE_NAME}"        
+    assert disk : "Unknown builder: ${env.NODE_NAME}"        
 	return disk
 }
 
@@ -244,12 +247,12 @@ def getDependancy(product, operator_dependency) {
     ]
 
     // получаем зависимости, если продукт не найден, падаем
-    // def dependancy = dependancyMap.get(product, null)
-    // assert dependancy : "Unknown product: ${product}"
-    // if (operator_dependency) {
-    //     dependancy.addAll(["OTF", "CTT", "OFD" , "OFDTOOLS"])
-	// }
-	// return dependancy
+    def dependancy = dependancyMap.get(product, null)
+    assert dependancy : "Unknown product: ${product}"
+    if (operator_dependency) {
+        dependancy.addAll(["OTF", "CTT", "OFD" , "OFDTOOLS"])
+	}
+	return dependancy
 }
 
 // получение модификатора тестов (cloud, inside-only, xp, ie)
@@ -327,25 +330,25 @@ def getSettingsProps(props_path=null) {
 }
 
 // получаем настройку MILESTONE
-// def getMilestoneSettings(stand, product, unit, props_path=null) {
-// 	def props = getSettingsProps(props_path)
-// 	def setName
-// 	if ( stand ) {
-// 		setName = "MILESTONE_${stand}_${product}"
-// 	} else {
-// 		setName = "MILESTONE_${product}"
-// 	}
+def getMilestoneSettings(stand, product, unit, props_path=null) {
+	def props = getSettingsProps(props_path)
+	def setName
+	if ( stand ) {
+		setName = "MILESTONE_${stand}_${product}"
+	} else {
+		setName = "MILESTONE_${product}"
+	}
 	
-// 	if ( unit ) {
-// 		setName += "_${unit}"
-// 	}
-// 	setName = setName.replace('-', '_').toUpperCase()
-// 	def milestone = props[setName]
-// 	if ( !milestone ) {
-// 		error("Не удалось получить значение для параметра ${setName}")
-// 	}
-// 	return milestone
-// }
+	if ( unit ) {
+		setName += "_${unit}"
+	}
+	setName = setName.replace('-', '_').toUpperCase()
+	def milestone = props[setName]
+	if ( !milestone ) {
+		error("Не удалось получить значение для параметра ${setName}")
+	}
+	return milestone
+}
 
 def setStateStand(stand, block, jobName, units=null) {	
 	def jcAddress = 'http://jenkins-control.tensor.ru'
@@ -648,7 +651,7 @@ def getBuildParams(modificator, standName){
 			buildParams['commandLine'].add("--SITE https://финансы.мояроссия.рф")
 		}
     }
-	if (modificator.contains('old')){
+	if (modificator.contains('old_chrome')){
 		buildParams['commandLine'].add("--CHROME_BINARY_LOCATION 'C:\\inetpub\\selenoid\\chrome_old\\chromium\\chrome.exe' --BROWSER_VERSION  OLD")
 	}
 	
@@ -799,7 +802,8 @@ def getJobParams(product) {
     def dependancy = getDependancy(product, null)
     for (item in dependancy) {
 		if (item != "ATF" && item != getProductPages(product).toUpperCase()) {
-			paramsList.add(string(defaultValue: '', description: "ветка ${item}", name: "${item}_BRANCH", trim: true))
+			sName = "${item}_BRANCH"
+			paramsList.add(string(defaultValue: getDefaultValueParamByName(sName), description: "ветка ${item}", name: sName, trim: true))
 		}
 	}
     paramsList.add(string(defaultValue: '', description: 'ветка HELPERS', name: 'HELPERS_BRANCH', trim: true))
@@ -807,8 +811,8 @@ def getJobParams(product) {
     paramsList.add(text(defaultValue: defaultValueUserOptions, description: 'Пользовательские параметры', name: 'USER_OPTIONS', trim: true))
 	def defaultValueControlsBranch = getDefaultValueParamByName('CONTROLS')
     paramsList.add(string(defaultValue: defaultValueControlsBranch, description: 'ветка CONTROLS', name: 'CONTROLS', trim: true))
-	// def defaultValueAtfBranch = getDefaultValueParamByName('ATF_BRANCH')
-    // paramsList.add(string(defaultValue: defaultValueAtfBranch, description: 'ветка ATF', name: 'ATF_BRANCH', trim: true))
+	def defaultValueAtfBranch = getDefaultValueParamByName('ATF_BRANCH')
+    paramsList.add(string(defaultValue: defaultValueAtfBranch, description: 'ветка ATF', name: 'ATF_BRANCH', trim: true))
 	paramsList.add(booleanParam(defaultValue: true, description: 'Headless Mode Browser', name: 'HEADLESS'))
 	paramsList.add(choice(choices: '40\n20\n10\n5\n1', name: 'STREAMS_NUMBER', description: 'Количество браузеров'))
 	def defaultValueCheckUnit = getDefaultValueParamByName('CHECK_UNIT', false)
@@ -818,6 +822,7 @@ def getJobParams(product) {
     def defaultValueOperatorDependency = getDefaultValueParamByName('OPERATOR_DEPENDENCY', false)
     paramsList.add(booleanParam(defaultValue: defaultValueOperatorDependency, description: 'Обновить библиотеки для тестов ОФД (CTT, OTF, OFD, OFDTOOLS)', name: 'OPERATOR_DEPENDENCY'))
 	paramsList.add(booleanParam(defaultValue: false, description: 'Сохранить эталонный видео файл', name: 'SAVE_STANDARD_VIDEO'))
+	paramsList.add(booleanParam(defaultValue: false, description: 'дебаг режим для react', name: 'REACT_DEBUG'))
     return paramsList
 }
 

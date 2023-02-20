@@ -1,14 +1,19 @@
 { -> }
 
 def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=false) {
-    def helpers = load 'helpers.groovy'
-    // def authService = 'http://auth-autotests.tensor.ru:5000'
-    def valueTimeout = 120
-    def commandLine = []
-    def userOptions = []
-    // def saby = false
+    def helpers = load 'helpers.groovy'    
 
     // try {
+    def valueTimeout = 180
+    def authService = 'http://auth-autotests.tensor.ru:5000'
+    def commandLine = []
+	if (comLineOpt) {
+		commandLine.add(comLineOpt)
+	}
+
+    def userOptions = []
+    def saby = false
+    def disk = helpers.getDiskName()  // имя мапнутого диска на ноде с браузером
 
     // получаем имя сборки без папки
     if (JOB_NAME.contains('/')) {
@@ -19,54 +24,47 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
 
     // стенд + юнит
     standWithUnit = jobNameStrict.split(' ')[1]
-
     pathTests = standWithUnit
-    // генерим имя папки, если это smoke тесты, то добавляем -smoke
-    // if (jobNameStrict.contains('smoke')) {
-    //     pathTests += '-smoke'
-    //     valueTimeout = 30
-    // }
 
-    def configPath = "config.ini"
-    // def standWithUnitMap = helpers.parseNameJob(standWithUnit)
-    // def standName = standWithUnitMap.get("stand", "")
-    def product = ''
-    // def unit = standWithUnitMap.get('unit', null)
+    def standWithUnitMap = helpers.parseNameJob(standWithUnit)
+    def standName = standWithUnitMap.get("stand", "")
+    def product = standWithUnitMap.get('product').toUpperCase()
+    def unit = standWithUnitMap.get('unit', null)
+
     def paramsJob = helpers.getJobParams(product);
-    // println("unit: ${unit}")
-    // def milestone = helpers.getMilestoneSettings(standName, product, unit)
-    // println("MILESTONE: ${milestone}")
-    // commandLine.add("--MILESTONE \"${milestone}\"")
+    // генерим имя папки, если это smoke тесты, то добавляем -smoke
+    if (jobNameStrict.contains('smoke')) {
+        valueTimeout = 30
+    }
+	if (!jobNameStrict.contains('smoke')) {
+        paramsJob.add(booleanParam(defaultValue: false, description: 'Запустить сборки совместимости', name: 'COMPATIBILITY'))
+    }
+    
     // обновляем виртуальное окружение
     def branch = null;
     if (params.get('BRANCH')) {
         branch = params.get('BRANCH')
     }
-    // def atf_branch = null;
-    // if (params.get('ATF_BRANCH')) {
-    //     atf_branch = helpers.getBranchPath(params.get('ATF_BRANCH'))
-    // }
-    def pythonBin = "/Users/artur_gaazov/Documents/html_academy/venv"; //!!!ВАЖНАЯ СТРОКА
 
-    // def controlsVer = null;
-    // if (params.get('CONTROLS')) {
-    //     controlsVer = helpers.getBranchPath(params.get('CONTROLS'))
-    // }
-    // def updateEnv = params.get('UPDATE')
-    // def tmp = helpers.updateEnvorimentGit(product, updateEnv, false, branch, false, unit, atf_branch, controlsVer, params.get('OPERATOR_DEPENDENCY'))
-    def pythonPath = pythonBin
-    // def ver = tmp[0]
-    // def serverAddress = "--SERVER_ADDRESS " + tmp[2]
-    // def repPaths = tmp[3]
+    def atf_branch = null;
+    if (params.get('ATF_BRANCH')) {
+        atf_branch = helpers.getBranchPath(params.get('ATF_BRANCH'))
+    }
+    def pythonBin = "/home/jenkins/envs/selenium4/bin/python3.7";
+    println(">>>>>>> pythonBin: $pythonBin")
 
-    if (params.get('HEADLESS')) {
-        commandLine.add('--HEADLESS_MODE True')
+    def controlsVer = null;
+    if (params.get('CONTROLS')) {
+        controlsVer = helpers.getBranchPath(params.get('CONTROLS'))
     }
-    
-    if (params.get('DOCKER')) {
-        commandLine.add('--DOCKER True')
-    }
-    
+
+    def updateEnv = env.UPDATE == 'true'
+    def tmp = helpers.updateEnvorimentGit(product, updateEnv, false, branch, false, unit, atf_branch, controlsVer, params.get('OPERATOR_DEPENDENCY'))
+    def ver = tmp[0]
+    def pythonPath = tmp[1]
+    def serverAddress = "--SERVER_ADDRESS " + tmp[2].replace('--DISPATCHER_RUN_MODE', '--TG_RUN_MODE')
+    def repPaths = tmp[3]
+
     // модификатор тестов (браузер, inside-only, версия ос)
     modificator = helpers.getListModificators()
     if (modificator) {
@@ -75,103 +73,126 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
         commandLine += buildParams.get("commandLine")
         userOptions += buildParams.get("userOptions")
         serverAddress = buildParams.get("serverAddress", serverAddress)
-        valueTimeout = buildParams.get("valueTimeout", valueTimeout)        
+        valueTimeout = buildParams.get("valueTimeout", valueTimeout)
         if (buildParams.get("configPath")){
             configPath = buildParams.get("configPath")
         }
     }
 
-    def currentName = []
-    // if (atf_branch) {
-    //     currentName.add(atf_branch)
-    // }
-    // if (controlsVer) {
-    //     currentName.add(controlsVer)
-    // }
-    // if (product in ['ONLINE', 'INSIDE', 'MY']) {
-    //     paramsJob.add(choice(choices: 'online\nsaby', name: 'DOMAIN', description: 'run tests on domain'))
-    // }
+    if (product in ['ONLINE', 'INSIDE', 'MY']) {        
+        paramsJob.add(choice(choices: 'online\nsaby\nclient\nclient.sabyc\nmyrussia', name: 'DOMAIN', description: 'run tests on domain'))
+    }
 
-    // paramDomain = params.get('DOMAIN')
-    // if (paramDomain && paramDomain == 'saby') {
-    //     def tmpProduct = product
-    //     if (tmpProduct == 'SBIS') {
-    //         commandLine.add("--SITE https://${standName}.saby.ru")
-    //     } else {
-    //         if (tmpProduct == 'INSIDE') {
-    //             tmpProduct = "ONLINE"
-    //         }
-    //         commandLine.add("--SITE https://${standName}-${tmpProduct.toLowerCase()}.saby.ru")
-    //     }
-    //     currentName.add(paramDomain)
-    // }
-
-    // параметры сборки
     properties([
         disableConcurrentBuilds(),
         buildDiscarder(
             logRotator(artifactDaysToKeepStr: '',
                        artifactNumToKeepStr: '',
                        daysToKeepStr: '7',
-                       numToKeepStr: '7')),
+                       numToKeepStr: '14')),
         parameters(paramsJob),
         pipelineTriggers(helpers.getTriggers())
     ])
+	
+	def currentName = []
+    paramDomain = params.get('DOMAIN')
+    if (paramDomain && paramDomain != 'online') {
+        def tmpProduct = product
+        if (tmpProduct == 'INSIDE') {
+            tmpProduct = "ONLINE"
+        }
+        
+        if (paramDomain == 'client') {
+            if (tmpProduct == "ONLINE") {
+                commandLine.add("--SITE https://fix-client.sbis.ru")
+            }
+        }
+        if (paramDomain == 'client.sabyc') {
+            if (tmpProduct == "ONLINE") {
+                commandLine.add("--SITE https://fix-client.sabyc.ru")
+            }
+        }
+        if (paramDomain == 'saby') {
+            if (tmpProduct == 'SBIS') {
+                commandLine.add("--SITE https://fix.saby.ru")
+            } else {
+                if (standName) {
+                    commandLine.add("--SITE https://${standName}-${tmpProduct.toLowerCase()}.saby.ru")            
+                } else {
+                    commandLine.add("--SITE http://${tmpProduct.toLowerCase()}.saby.ru")
+                }
+            }  
+        }
+		currentName.add(paramDomain)
+    }
 
-    // для -eng
-    // if (standWithUnit.endsWith('-eng')) {
-    //     userOptions.add("LANG=eng")
-    // }
+    if (params.get('HEADLESS')) {
+        commandLine.add('--HEADLESS_MODE new')
+    }
+	
+	if (params.get('DOCKER')) {
+        commandLine.add('--DOCKER True')
+    }
+	
+	if (params.get('CHECK_UNIT')){
+		    
+			def check_unit
+			if (unit) {
+				if (unit == 'autotests'){
+					check_unit = "autotests-inside"
+				}
+				else if (unit == "ext-2"){
+					check_unit = "ext2"
+				}
+				else{
+			    check_unit = unit
+				}
+			}
+			else {
+			    check_unit = product.toLowerCase()
+			}
+			commandLine.add("--UNIT_FOR_CHECK \"${check_unit}\"")
+	}
+	
+	if (params.get('COMPATIBILITY')) {
+        commandLine.add('--TAGS_TO_START production_online')
+		currentName.add('COMP')
+    }
 
     if (params.get('USER_OPTIONS')) {
         for (i in params.get('USER_OPTIONS').split(' ')) {
-            userOptions.add(i)
-        }
+			userOptions.add(i)
+		}
     }
-    
-    // if (params.get('CHECK_UNIT')) {
-    //     def check_unit
-    //     if (unit) {
-    //         if (unit == 'autotests'){
-    //             check_unit = "autotests-inside"
-    //         }
-    //         else if (unit == 'ext-autotest'){
-    //             check_unit = "autotest-ext"
-    //         }
-    //         else{
-    //             check_unit = unit
-    //         }
-    //     }
-    //     else {
-    //         check_unit = product.toLowerCase()
-    //     }
-    //     commandLine.add("--UNIT_FOR_CHECK \"${check_unit}\"")
-    // }
 
     // для приемочных на production запускаем только протегированные
-    // if ((!standName && !jobNameStrict.contains('smoke')) || (modificator.contains('only') && standName != 'test'))  {
-    //     def depTags = [
-    //         'INSIDE': 'production_inside',
-    //         'ONLINE': 'production_online',
-    //         'MY': 'production_online',
-    //         'CLOUD': 'production'
-    //     ]
-    //     def tag = depTags.get(product, "")
-    //     if (tag.size() > 0) {
-    //         commandLine.add("--TAGS_TO_START \"${tag}\"")
-    //     }
-    // }
+    if ((!standName && !jobNameStrict.contains('smoke')) || (modificator.contains('only')))  {
+        def depTags = [
+            'INSIDE': 'production_inside',
+            'ONLINE': 'production_online',
+            'MY': 'production_online',
+            'CLOUD': 'production'
+        ]
+        def tag = depTags.get(product, "")
+        if (tag.size() > 0) {
+            commandLine.add("--TAGS_TO_START \"${tag}\"")
+        }
+    }
     // для приемочных на vip64 запускаем только протегированные
-    // if ((unit == 'ext-vip64') && !jobNameStrict.contains('smoke'))  {
-    //     commandLine.add("--TAGS_TO_START \"ext64\"")
-    // }
+    if ((unit == 'ext-vip64') && !jobNameStrict.contains('smoke'))  {
+        commandLine.add("--TAGS_TO_START \"ext64\"")
+    }
 
+    def milestone = helpers.getMilestoneSettings(standName, product, unit)
+    println("MILESTONE: ${milestone}")
+    commandLine.add("--MILESTONE \"${milestone}\"")
     // автовыстовление статуса в проверках, кроме боевых сборок
-    // if ( setStatusCheck == true && standName ) {
-    //     commandLine.add("--SET_STATUS_CHECK")
-    // }
+    if ( setStatusCheck == true && standName ) {
+        commandLine.add("--SET_STATUS_CHECK")
+    }
 
-    // берем имя папки из пути в репозитории GIT
+    // развилка для запуска тестов совместимости
+    def productGit = helpers.getProductPages(product)
     folderName = repoPath.replace('/', '_')    
     pathTests += "/${folderName}"
 
@@ -180,9 +201,10 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
     testFolderPath = homePath + pathTests
     removeFolderPath = testFolderPath
 
+    // эти продукты еще лежат в SVN
     dir(testFolderPath) {
         stage('Git clone') {
-            def pages = 'pages_' + helpers.getProductPages(product)
+            def pages = 'pages_' + productGit
             if (branch) {  // если у нас feature ветка
                 ver = branch
                 pythonPath = pythonPath + ":${testFolderPath}"
@@ -196,7 +218,10 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
                 }
             }
             // выкачиваем тесты из GIT
-            println(">>>>>>> GIT CLONE BRANCH: ${repo};${repoPath};$ver")
+            println(">>>>>>> GIT CLONE BRANCH: $ver")
+            println repoPath
+            println ver
+            println repo
             timeout(time: 10, unit: 'MINUTES') {
                 lock("checkoutTests_${env.NODE_NAME}") {
                     if (product == 'SBIS') {
@@ -207,21 +232,26 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
                 }
             }
         }
+        // когда делаем checkout он делается в папку относительно корня репозитория
+        pathTests += "/${repoPath}"
     }
 
-    // когда делаем checkout он делается в папку относительно корня репозитория
-    pathTests += "/${repoPath}"
+    configPath = "config/${standWithUnit.replace('-', '_')}.ini"
+    println(">>>>>>> config: $configPath")
 
     dir(homePath + pathTests) {
         dir('test-reports') {
             deleteDir()
         }
-        // папка сборки
-        workspaceFolder = pwd()
-        println(">>>>>>> workspaceFolder: $workspaceFolder")
+        def downloadDir = pwd()
+        def downloadDirBrowser="${disk}:\\${pathTests.replace('/', '\\')}"
+
+        println(">>>>>>> downloadDir: $downloadDir")
+        println(">>>>>>> downloadDirBrowser: $downloadDirBrowser")
 
         // HTTP PATH, ARTIFACT_PATH для скриншотов и других артефактов
         def hostname = sh returnStdout: true, script: 'echo $HOSTNAME'
+
         if (keep_folder) {
             artifactPath = pwd();
             commandLine.add("--HTTP_PATH \"http://${hostname.trim()}/${pathTests}\"")
@@ -233,41 +263,52 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
             println(">>>>>>> artifactFolder: ${artifactPath}")
         }
 
-        dir(artifactPath) {
-            // download result.db
-            helpers.getResultDB()
-        }
-
-        // DOWNLOAD_DIR_BROWSER
-        // downloadDirBrowser="${disk}:\\${pathTests.replace('/', '\\')}"
-
         // квота для tensor-grid
-        // def quota = standWithUnit.replace('-', '_')
+        def quota = standWithUnit.replace('-', '_')
+
+		if (controlsVer) {
+            currentName.add(controlsVer)
+        }
 
         //Запустить только упавшие?
         if (params.get('BUILD_MODE') == 'FAILED') {
             commandLine.add("--START_FAIL")
-            currentName.add('FAILED')
+			currentName.add('FAILED')
         }
+		
+		if (params.get('DOCKER')) {
+			currentName.add('DOCKER')
+		}
+
+        if (atf_branch) {
+            currentName.add(atf_branch)
+        }
+		
         //Запустить только упавшие НЕ по ошибкам?
         if (params.get('BUILD_MODE') == 'FAILED_WITHOUT_ERRORS') {
             commandLine.add("--RESTART_FAIL_WITHOUT_ERRORS")
-            currentName.add('FAILED_WITHOUT_ERRORS')
+			currentName.add('FAILED_WITHOUT_ERRORS')
         }
-        
-        // if (params.get('DOCKER')) {
-        //     currentName.add('DOCKER')
-        // }
-        
-        //Записываем параметры в название билда сборки, если они были переданы
-        if (currentName) {
-            currentName.add(0, currentBuild.displayName)
-            currentBuild.displayName = currentName.join(' / ')
+		
+		//Записываем параметры в название билда сборки, если они были переданы
+		if (currentName) {
+			currentName.add(0, currentBuild.displayName)
+			currentBuild.displayName = currentName.join(' / ')
         }
-        
         // количество потоков
-        streams_number = params.get('STREAMS_NUMBER', 40)        
+        streams_number = params.get('STREAMS_NUMBER')
+        if (!streams_number) {
+            streams_number = 40
+        }
         commandLine.add("--STREAMS_NUMBER ${streams_number}")
+        
+        // лимит свободной памяти
+        commandLine.add("--RUNNER_LIMIT_FREE_MEMORY 3000")
+
+        // сделано так, чтобы перезапуск был при 1 запуске, когда настройки нет, а не просто через true
+        if (params.get('RESTART_TESTS')) {
+            commandLine.add('--RESTART_AFTER_BUILD_MODE')
+        }
 
         if (params.get('SAVE_STANDARD_VIDEO')) {
             commandLine.add("--HIGHLIGHT_ACTION True")
@@ -278,21 +319,19 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
             commandLine.add("--SCREEN_CAPTURE \"video\"")
         }
 
-        // лимит свободной памяти
-        commandLine.add("--RUNNER_LIMIT_FREE_MEMORY 3000")
-
-        // сделано так, чтобы перезапуск был при 1 запуске, когда настройки нет, а не просто через true
-        if (params.get('RESTART_TESTS')) {
-            commandLine.add('--RESTART_AFTER_BUILD_MODE')
+        dir(artifactPath) {
+            // download result.db
+            helpers.getResultDB()
         }
-                
-        // def versionJSON = helpers.saveVersions(quota)
-        // if (versionJSON && versionJSON.build && versionJSON.version) {
-        //     println(">>>>>>> PRODUCT VERSION: ${versionJSON.version} # ${versionJSON.build}")
-        //     commandLine.add("--PRODUCT_VERSION \"${versionJSON.version}\"")
-        //     commandLine.add("--PRODUCT_BUILD \"${versionJSON.build}\"")
-        // }
-        
+				
+		def versionJSON = helpers.saveVersions(quota)
+		if (versionJSON && versionJSON.build && versionJSON.version) {
+            println("VERSION: ${versionJSON.build}")
+            commandLine.add("--PRODUCT_BUILD \"${versionJSON.build}\"")
+            println("VERSION: ${versionJSON.version}")
+            commandLine.add("--PRODUCT_VERSION \"${versionJSON.version}\"")
+        }
+		
         commandLine = commandLine.join(' ')
         if (userOptions.size() > 0) {
             userOptions = '--USER_OPTIONS ' + userOptions.join(' ')
@@ -300,12 +339,11 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
             userOptions = ""
         }
 
-        def resultCommandLine = """${commandLine} --BROWSER_PAGE_LOAD_STRATEGY eager --DISABLE_GPU True --GIT_REPOSITORY ${repo} --GIT_PATH ${repoPath} --SKIP_TESTS_FROM_JC --AUTH_SERVICE_ADDRESS ${authService} --PATH_INIT $configPath --WAIT_ELEMENT_LOAD 20 --DELAY_ACTION 0 --JOB "${env.JOB_NAME}" --JOB_URL "${env.JOB_URL}" --BUILD ${env.BUILD_NUMBER} $serverAddress --TG_QUOTA $quota --DOWNLOAD_DIR "${workspaceFolder}" --DOWNLOAD_DIR_BROWSER "${downloadDirBrowser}" """
+        def resultCommandLine = """${commandLine} --BROWSER_PAGE_LOAD_STRATEGY eager --DISABLE_GPU True --GIT_REPOSITORY ${repo} --GIT_PATH ${repoPath} --SKIP_TESTS_FROM_JC --AUTH_SERVICE_ADDRESS ${authService} --PATH_INIT $configPath --WAIT_ELEMENT_LOAD 20 --DELAY_ACTION 0 --JOB "${env.JOB_NAME}" --JOB_URL "${env.JOB_URL}" --BUILD ${env.BUILD_NUMBER} $serverAddress --TG_QUOTA $quota --DOWNLOAD_DIR "${downloadDir}" --DOWNLOAD_DIR_BROWSER "${downloadDirBrowser}" """
         if (comLineOpt) {
             resultCommandLine = helpers.overrideCommandLine(resultCommandLine, comLineOpt)
         }
 
-        // Выполнить команду windows
         timeout(time: valueTimeout, unit: 'MINUTES') {
             stage ('Running tests') {
                 def execCommand
@@ -326,7 +364,6 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
         dir(artifactPath) {
             archiveArtifacts "result.db"
         }
-        
     }
     if (!keep_folder && removeFolderPath) {
         println("Удаляем директорию с тестами: $removeFolderPath")
