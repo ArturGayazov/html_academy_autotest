@@ -28,6 +28,11 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
 
     def start_tests = 'python3 start_tests.py --HEADLESS_MODE True --SCREEN_CAPTURE video'
 
+    //клонируем проект
+    timeout(time: 10, unit: 'MINUTES') {
+            helpers.checkoutGitFolder(repoPath, 'master', repo, null, null, true)
+    }
+
     timeout(time: valueTimeout, unit: 'MINUTES') {
     stage ('Running tests') {
         sh """
