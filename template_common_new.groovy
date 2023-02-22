@@ -30,7 +30,7 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
 
     //клонируем проект
     timeout(time: 10, unit: 'MINUTES') {
-            helpers.checkoutGitFolder(repoPath, 'master', repo, null, null, true)
+            helpers.checkoutGitFolder(repoPath, 'master', repo, null, null, false)
     }
 
     timeout(time: valueTimeout, unit: 'MINUTES') {
