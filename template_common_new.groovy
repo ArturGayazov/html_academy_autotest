@@ -30,19 +30,21 @@ def building(repo, repoPath, setStatusCheck=true, comLineOpt=null, keep_folder=f
 
     //клонируем проект
     timeout(time: 10, unit: 'MINUTES') {
+        stage ('Clone Project') {
             helpers.checkoutGitFolder(repoPath, 'master', repo, null, null, false)
+        }
     }
 
-    timeout(time: valueTimeout, unit: 'MINUTES') {
-    stage ('Running tests') {
-        sh """
-        ${python_venv_activate}
-        ${project_path}
-        ${go_to_test} 
-        ${start_tests}
-        """
-    }
-    }
+    // timeout(time: valueTimeout, unit: 'MINUTES') {
+    // stage ('Running tests') {
+    //     sh """
+    //     ${python_venv_activate}
+    //     ${project_path}
+    //     ${go_to_test} 
+    //     ${start_tests}
+    //     """
+    // }
+    // }
 
 
 }
